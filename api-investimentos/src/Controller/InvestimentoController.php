@@ -8,6 +8,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
+use App\Utils\InvestmentCalculator;
+
 class InvestimentoController extends AbstractController {
     #[Route('/api/investments/create', name: 'create_investments', methods: ['POST'])]
     public function create(Request $request, EntityManagerInterface $em): JsonResponse {
@@ -53,7 +55,7 @@ class InvestimentoController extends AbstractController {
 
         $result = [];
         foreach ($investments as $investment) {
-            $valueWinnings = $this->calculateInvestment($investment);
+            $valueWinnings = InvestmentCalculator::calculateInvestment($investment);
             $result[] = [
                 'id' => $investment->getId(),
                 'owner' => $investment->getOwner(),
@@ -66,23 +68,5 @@ class InvestimentoController extends AbstractController {
         return $this->json([
             'investments' => $result
         ]);
-    }
-
-    /*
-        Calcula o valor dos ganhos do investimento com o acrécimo de 0,52%/mes
-    */
-
-    private function calculateInvestment(Investment $investment): float {
-
-        $initValue = $investment->getInvestmentValue();
-        $creationDate = $investment->getCreationDate();
-        $currentDate = new \DateTime();
-
-        $interval = $creationDate->diff($currentDate);
-        $months = ($interval->y * 12) + $interval->m;
-
-        $finalValue = $initValue * pow(1.0052, $months);
-
-        return round($finalValue, 2);
     }
 }
