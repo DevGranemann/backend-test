@@ -43,7 +43,7 @@ class InvestimentoController extends AbstractController {
     #[Route('/api/investments/list/{id}', name: 'list_investments', methods: ['GET'])]
     public function investmentList(int $id, EntityManagerInterface $em): JsonResponse {
 
-        $investments = $em->getRepository(Investment::class)->findBy(['owner' => $id]);
+        $investments = $em->getRepository(Investment::class)->findBy(['id' => $id]);
 
         if (!$investments) {
             return $this->json([
