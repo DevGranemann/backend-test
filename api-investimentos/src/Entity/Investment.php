@@ -46,6 +46,11 @@ class Investment
 
     public function setCreationDate(\DateTime $creationDate): static
     {
+        $now = new \DateTime();
+        if ($creationDate > $now) {
+            throw new \InvalidArgumentException('A data de criação não pode ser futura');
+        }
+
         $this->creationDate = $creationDate;
 
         return $this;
@@ -58,6 +63,10 @@ class Investment
 
     public function setInvestmentValue(float $investmentValue): static
     {
+        if ($investmentValue < 0) {
+            throw new \InvalidArgumentException('O valor do investimento não pode ser negativo.');
+        }
+
         $this->investmentValue = $investmentValue;
 
         return $this;
