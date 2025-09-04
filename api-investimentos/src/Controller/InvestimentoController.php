@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
 use App\Utils\InvestmentCalculator;
+use App\Utils\TakeInvestmentOut;
 
 class InvestimentoController extends AbstractController {
     #[Route('/api/investments/create', name: 'create_investments', methods: ['POST'])]
@@ -62,11 +63,40 @@ class InvestimentoController extends AbstractController {
                 'creationDate' => $investment->getCreationDate(),
                 'investmentValue' => $investment->getInvestmentValue(),
                 'valueWithWinnings' => $valueWinnings,
+
             ];
         }
 
         return $this->json([
             'investments' => $result
+        ]);
+    }
+
+     #[Route('/api/investments/draw/{id}', name: 'draw_investments', methods: ['PUT'])]
+    public function drawInvestmentAccount(int $id, EntityManagerInterface $em): JsonResponse {
+        $investment = $em->getRepository(Investment::class)->find($id);
+
+        if (!$investment) {
+            return $this->json([
+                'error' => 'Investimento não encontrado'
+            ], 400);
+        }
+
+        try {
+            $withdrawValue = TakeInvestmentOut::TakeOutInvestment($investment);
+            $em->persist($investment);
+            $em->flush();
+        } catch (\InvalidArgumentException $e) {
+            return $this->json([
+                'error' => $e->getMessage()
+            ], 400);
+        }
+
+        return $this->json([
+            'message' => 'Saque realizado com sucesso',
+            'withdrawValue' => $withdrawValue,
+            'investmentId' => $investment->getId(),
+            'owner' => $investment->getOwner()
         ]);
     }
 }
