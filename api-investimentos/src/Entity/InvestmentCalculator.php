@@ -24,11 +24,26 @@ class InvestmentCalculator
         }
 
         $currentDate = new \DateTime();
-        $interval = $creationDate->diff($currentDate);
-        $months = ($interval->y * 12) + $interval->m;
+        $months = self::calculateMonthsBetween($creationDate, $currentDate);
 
         $finalValue = $initValue * pow(1.0052, $months);
 
         return round($finalValue, 2);
+    }
+
+    // Calculo de meses
+    public static function calculateMonthsBetween(\DateTime $start, \DateTime $end): int {
+        $interval = $start->diff($end);
+        return ($interval->y * 12) + $interval->m;
+    }
+
+    public static function calculateValueWinnings(Investment $investment): float {
+
+        $initValue = $investment->getInvestmentValue();
+        $finalValue = InvestmentCalculator::calculateInvestment($investment);
+
+        $valueWinnings = ($finalValue - $initValue);
+
+        return round($valueWinnings, 2);
     }
 }

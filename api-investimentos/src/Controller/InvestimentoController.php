@@ -57,13 +57,14 @@ class InvestimentoController extends AbstractController {
         $result = [];
         foreach ($investments as $investment) {
             $valueWinnings = InvestmentCalculator::calculateInvestment($investment);
+            $valueWinningsOnly = InvestmentCalculator::calculateValueWinnings($investment);
             $result[] = [
                 'id' => $investment->getId(),
                 'owner' => $investment->getOwner(),
                 'creationDate' => $investment->getCreationDate(),
                 'investmentValue' => $investment->getInvestmentValue(),
-                'valueWithWinnings' => $valueWinnings,
-
+                'valueWithWinnings' => $valueWinnings, // valor total
+                'winningsValueOnly' => $valueWinningsOnly, // valor somente do lucro, sem o investimento
             ];
         }
 
@@ -72,7 +73,7 @@ class InvestimentoController extends AbstractController {
         ]);
     }
 
-     #[Route('/api/investments/draw/{id}', name: 'draw_investments', methods: ['PUT'])]
+    #[Route('/api/investments/draw/{id}', name: 'draw_investments', methods: ['PUT'])]
     public function drawInvestmentAccount(int $id, EntityManagerInterface $em): JsonResponse {
         $investment = $em->getRepository(Investment::class)->find($id);
 
