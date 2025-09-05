@@ -4,7 +4,8 @@ namespace App\Entity;
 
 use App\Repository\OwnerRepository;
 use Doctrine\ORM\Mapping as ORM;
-
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 #[ORM\Entity(repositoryClass: OwnerRepository::class)]
 class Owner
 {
@@ -15,6 +16,13 @@ class Owner
 
     #[ORM\Column(length: 100)]
     private ?string $name = null;
+
+    #[ORM\OneToMany(mappedBy: 'owner', targetEntity: Investment::class)]
+    private Collection $investments;
+
+    public function __construct() {
+        $this->investments = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -31,5 +39,9 @@ class Owner
         $this->name = $name;
 
         return $this;
+    }
+
+    public function getInvestments(): Collection {
+        return $this->investments;
     }
 }

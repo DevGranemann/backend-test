@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\InvestmentRepository;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\Owner;
 
 #[ORM\Entity(repositoryClass: InvestmentRepository::class)]
 class Investment
@@ -13,26 +14,27 @@ class Investment
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 100)]
-    private ?string $owner = null;
-
     #[ORM\Column]
     private ?\DateTime $creationDate = null;
 
     #[ORM\Column]
     private ?float $investmentValue = null;
 
+    #[ORM\ManyToOne(targetEntity: Owner::class, inversedBy: 'investments')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Owner $owner = null;
+
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getOwner(): ?string
+    public function getOwner(): ?Owner
     {
         return $this->owner;
     }
 
-    public function setOwner(string $owner): static
+    public function setOwner(Owner $owner): static
     {
         $this->owner = $owner;
 
