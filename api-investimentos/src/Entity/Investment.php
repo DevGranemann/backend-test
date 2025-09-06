@@ -24,6 +24,9 @@ class Investment
     #[ORM\JoinColumn(nullable: false)]
     private ?Owner $owner = null;
 
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?\DateTime $withdrawnAt = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -70,6 +73,18 @@ class Investment
         }
 
         $this->investmentValue = $investmentValue;
+
+        return $this;
+    }
+
+    public function getWithdrawnAt(): ?\DateTime
+    {
+        return $this->withdrawnAt;
+    }
+
+    public function setWithdrawnAt(?\DateTime $date): static
+    {
+        $this->withdrawnAt = $date;
 
         return $this;
     }
