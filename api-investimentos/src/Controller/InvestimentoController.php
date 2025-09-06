@@ -104,6 +104,7 @@ class InvestimentoController extends AbstractController {
 
     #[Route('/api/investments/draw/{id}', name: 'draw_investments', methods: ['PUT'])]
     public function drawInvestmentAccount(int $id, EntityManagerInterface $em): JsonResponse {
+
         $investment = $em->getRepository(Investment::class)->find($id);
 
         if (!$investment) {
@@ -132,9 +133,9 @@ class InvestimentoController extends AbstractController {
             'ownerName' => $owner ? $owner->getName() : null
         ]);
     }
-    // Lista de ganhos de investimentos que foram retirados (por proprietário)
+
     #[Route('/api/investments/withdrawn-gains/{ownerId}', name: 'list_withdrawn_gains', methods: ['GET'])]
-    public function listWithdrawnGains(int $ownerId, EntityManagerInterface $em): JsonResponse
+    public function listWithdrawnGains(int $ownerId, EntityManagerInterface $em, InvestmentRepository $investmentRepository,): JsonResponse
     {
         $owner = $em->getRepository(\App\Entity\Owner::class)->find($ownerId);
 
@@ -142,28 +143,30 @@ class InvestimentoController extends AbstractController {
             return $this->json(['error' => 'Proprietário não encontrado.'], 404);
         }
 
-        $investments = $em->getRepository(Investment::class)->findBy([
-            'owner' => $owner,
-            'withdrawnAt' => ['not' => null]
-        ]);
+        $investments = $investmentRepository->findWithdrawnByOwner($owner);
 
-        if (!$investments) {
-        return $this->json([
-            'error' => 'Nenhum investimento encontrado'
+        if (count($investments) === 0) {
+            return $this->json([
+                'error' => 'Nenhum investimento retirado encontrado'
             ], 404);
         }
 
         $result = [];
         foreach ($investments as $investment) {
-            $gain = InvestmentCalculator::calculateValueWinnings($investment);
+            $gain = $investment->getWithdrawnGain();
             $result[] = [
                 'investmentId' => $investment->getId(),
                 'withdrawnAt' => $investment->getWithdrawnAt()?->format('Y-m-d H:i:s'),
-                'gain' => $gain
+                'profit' => $investment->getWithdrawnGain(),
+                'ownerId' => $owner->getId(),
+                'ownerName' => $owner->getName()
             ];
         }
 
-        return $this->json(['withdrawnGains' => $result]);
+        return $this->json([
+            'withdrawnGains' => $result,
+            'total' => count($investments)
+        ]);
     }
 
     // lista o saldo futuro de um investimento

@@ -58,6 +58,17 @@ class InvestmentRepository extends ServiceEntityRepository
         ];
     }
 
+    public function findWithdrawnByOwner($owner): array {
+
+        return $this->createQueryBuilder('i')
+            ->where('i.owner = :owner')
+            ->andWhere('i.withdrawnAt IS NOT NULL')
+            ->setParameter('owner', $owner)
+            ->getQuery()
+            ->getResult();
+
+    }
+
     //    /**
     //     * @return Investment[] Returns an array of Investment objects
     //     */

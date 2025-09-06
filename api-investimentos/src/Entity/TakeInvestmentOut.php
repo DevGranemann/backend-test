@@ -41,6 +41,7 @@ class TakeInvestmentOut {
 
         $investment->setInvestmentValue(0);
         $investment->setWithdrawnAt(new \DateTime());
+        $investment->setWithdrawnGain($profit);
 
         return round($finalValue, 2);
     }
