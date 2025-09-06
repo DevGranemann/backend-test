@@ -10,34 +10,9 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
 use App\Utils\InvestmentCalculator;
 use App\Utils\TakeInvestmentOut;
+use App\Repository\InvestmentRepository;
 
 class InvestimentoController extends AbstractController {
-
-    #[Route('/api/clientOwner/create', name: 'create_owner', methods: ['POST'])]
-    public function createOwner(Request $request, EntityManagerInterface $em): JsonResponse {
-
-        $data = json_decode($request->getContent(), true);
-
-        if (!$data || !isset($data['ownerName'])) {
-            return $this->json([
-                'error' => 'Parâmetros inválidos. Informe: o nome do proprietário.'
-            ], 400);
-        }
-
-        $owner = new \App\Entity\Owner();
-        $owner->setName($data['ownerName']);
-
-        $em->persist($owner);
-        $em->flush();
-
-        return $this->json([
-            'message' => 'Proprietário criado com sucesso.',
-            'owner' => [
-                'id' => $owner->getId(),
-                'name' => $owner->getName()
-            ]
-        ], 201);
-    }
 
     #[Route('/api/investments/create', name: 'create_investments', methods: ['POST'])]
     public function createInvest(Request $request, EntityManagerInterface $em): JsonResponse {
@@ -79,7 +54,7 @@ class InvestimentoController extends AbstractController {
     }
 
     #[Route('/api/investments/list/{ownerId}', name: 'list_investments', methods: ['GET'])]
-    public function investmentList(int $ownerId, EntityManagerInterface $em): JsonResponse {
+    public function investmentList(Request $request, int $ownerId, EntityManagerInterface $em, InvestmentRepository $investmentRepository): JsonResponse {
 
         $owner = $em->getRepository(\App\Entity\Owner::class)->find($ownerId);
 
@@ -89,13 +64,19 @@ class InvestimentoController extends AbstractController {
             ], 404);
         }
 
-        $investments = $owner->getInvestments();
-
-        if (count($investments) === 0) {
+        if (count($owner->getInvestments()) === 0) {
             return $this->json([
                 'message' => 'Nenhum investimento encontrado para este proprietário.'
             ], 404);
         }
+
+        $page = max(1, (int) $request->query->get('page', 1));
+        $limit = min(50, max(1, (int) $request->query->get('limit', 10))); // proteção
+
+        $paginated = $investmentRepository->findPaginatedByOwner($owner, $page, $limit);
+        $investments = $paginated['items'];
+        $total = $paginated['total'];
+        $pages = $paginated['pages'];
 
         $result = [];
         foreach ($investments as $investment) {
@@ -113,6 +94,10 @@ class InvestimentoController extends AbstractController {
         }
 
         return $this->json([
+            'page' => $page,
+            'limit' => $limit,
+            'total' => $total,
+            'pages' => $pages,
             'investments' => $result
         ]);
     }
@@ -147,20 +132,26 @@ class InvestimentoController extends AbstractController {
             'ownerName' => $owner ? $owner->getName() : null
         ]);
     }
-    
+    // Lista de ganhos de investimentos que foram retirados (por proprietário)
     #[Route('/api/investments/withdrawn-gains/{ownerId}', name: 'list_withdrawn_gains', methods: ['GET'])]
     public function listWithdrawnGains(int $ownerId, EntityManagerInterface $em): JsonResponse
     {
         $owner = $em->getRepository(\App\Entity\Owner::class)->find($ownerId);
+
         if (!$owner) {
             return $this->json(['error' => 'Proprietário não encontrado.'], 404);
         }
 
         $investments = $em->getRepository(Investment::class)->findBy([
             'owner' => $owner,
-            // Considera apenas investimentos já retirados
             'withdrawnAt' => ['not' => null]
         ]);
+
+        if (!$investments) {
+        return $this->json([
+            'error' => 'Nenhum investimento encontrado'
+            ], 404);
+        }
 
         $result = [];
         foreach ($investments as $investment) {
@@ -173,5 +164,28 @@ class InvestimentoController extends AbstractController {
         }
 
         return $this->json(['withdrawnGains' => $result]);
+    }
+
+    // lista o saldo futuro de um investimento
+    #[Route('/api/investments/future-balances/{investmentId}', name: 'investment_future_balances', methods: ['GET'])]
+    public function projectFutureBalances(int $investmentId, Request $request, EntityManagerInterface $em): JsonResponse {
+
+        $investment = $em->getRepository(Investment::class)->find($investmentId);
+
+        if (!$investment) {
+            return $this->json(['error' => 'Investimento não encontrado.'], 404);
+        }
+
+        $years = max(1, (int) $request->query->get('years', 3));
+
+        $projection = InvestmentCalculator::projectFutureBalances($investment, 3);
+
+        return $this->json([
+            'investmentId' => $investment->getId(),
+            'ownerId' => $investment->getOwner()->getId(),
+            'ownerName' => $investment->getOwner()->getName(),
+            'years' => $years,
+            'projections' => $projection
+        ]);
     }
 }

@@ -52,7 +52,7 @@ class InvestmentCalculator
         $creationDate = $investment->getCreationDate();
         $result = [];
 
-        for ($i = 0; $i <= $years; $i++) {
+        for ($i = 0; $i -1 <= $years; $i++) {
             $months = $i * 12;
             $futureValue = $initValue * pow(1.0052, $months);
             $futureDate = (clone $creationDate)->modify("+$months months")->format('Y-m-d');
