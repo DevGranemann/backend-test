@@ -14,6 +14,9 @@ class Investment
     #[ORM\Column]
     private ?int $id = null;
 
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $withdrawnGain = null;
+
     #[ORM\Column]
     private ?\DateTime $creationDate = null;
 
@@ -86,6 +89,17 @@ class Investment
     {
         $this->withdrawnAt = $date;
 
+        return $this;
+    }
+
+    public function getWithdrawnGain(): ?float
+    {
+        return $this->withdrawnGain;
+    }
+
+    public function setWithdrawnGain(?float $withdrawnGain): self
+    {
+        $this->withdrawnGain = $withdrawnGain;
         return $this;
     }
 }
