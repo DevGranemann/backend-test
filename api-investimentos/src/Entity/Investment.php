@@ -17,8 +17,8 @@ class Investment
     #[ORM\Column(type: 'float', nullable: true)]
     private ?float $withdrawnGain = null;
 
-    #[ORM\Column]
-    private $creationDate = null;
+    #[ORM\Column(type: 'datetime')]
+    private ?\DateTime $creationDate = null;
 
     #[ORM\Column]
     private ?float $investmentValue = null;
@@ -47,18 +47,15 @@ class Investment
         return $this;
     }
 
-    public function getCreationDate()
+    public function getCreationDate(): ?\DateTime
     {
         return $this->creationDate;
     }
 
-    public function setCreationDate($creationDate): void
+    public function setCreationDate(\DateTime $creationDate): self
     {
-        if (!$creationDate instanceof \DateTime) {
-            throw new \InvalidArgumentException("Creation date must be a DateTime object.");
-        }
-
         $this->creationDate = $creationDate;
+        return $this;
     }
 
     public function getInvestmentValue(): ?float

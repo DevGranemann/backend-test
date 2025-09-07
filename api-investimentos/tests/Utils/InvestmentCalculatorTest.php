@@ -45,7 +45,6 @@ class InvestmentCalculatorTest extends TestCase {
         $property->setValue($investment, null);
 
         InvestmentCalculator::calculateInvestment($investment);
-
     }
 
     public function testCalculateInvestmentThrowsExceptionOnInvalidDateFormat() {
