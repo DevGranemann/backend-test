@@ -18,7 +18,7 @@ class Investment
     private ?float $withdrawnGain = null;
 
     #[ORM\Column]
-    private ?\DateTime $creationDate = null;
+    private $creationDate = null;
 
     #[ORM\Column]
     private ?float $investmentValue = null;
@@ -47,21 +47,18 @@ class Investment
         return $this;
     }
 
-    public function getCreationDate(): ?\DateTime
+    public function getCreationDate()
     {
         return $this->creationDate;
     }
 
-    public function setCreationDate(\DateTime $creationDate): static
+    public function setCreationDate($creationDate): void
     {
-        $now = new \DateTime();
-        if ($creationDate > $now) {
-            throw new \InvalidArgumentException('A data de criação não pode ser futura');
+        if (!$creationDate instanceof \DateTime) {
+            throw new \InvalidArgumentException("Creation date must be a DateTime object.");
         }
 
         $this->creationDate = $creationDate;
-
-        return $this;
     }
 
     public function getInvestmentValue(): ?float
