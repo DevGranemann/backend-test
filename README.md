@@ -1,6 +1,19 @@
 # API de Investimentos
 API desenvolvida para agerenciar investimentos.
 
+## Funcionalidades
+- **Cadastro de Proprietários:** funcionalidade que permite cadastrar um usuário que será, futuramente, proprietário de investimentos;
+
+- **Cadastro de Investimentos:** esta funcionalidade podemos criar um novo investimento para um determinado proprietário já cadastrado;
+
+- **Listagem de Investimentos:** lista todos os investimentos feitos por um usuário e também o saldo atual de cada investimento. Possui paginação;
+
+- **Saque:** esta funcionalidade permite o usuário retirar apenas o valor total de seu investimento, ou seja, o valor que investiu mais o lucro obtido. Lembrando que as taxas de impostos são aplicadas apenas no valor de lucros que aquele investimento gerou;
+
+- **Listagem de Ganhos Retirados:** aqui obtemos uma lista de todos os investimentos que foram sacados pelo proprietário. Esta lista contém informações as informações de valor que aquele investimento gerou e a data do saque, por exemplo;
+
+- **Projeção de Saldos Futuros:** com essa funcionalidades podemos observar melhor e estudar as projeções dos investimentos. É possível ``setar`` um valor em anos para melhor simulação.
+
 ## Estrutura do Repositório
 
 ```
@@ -22,30 +35,8 @@ src/
 │       └── InvestmentCalculatorTest.php -> Documento onde está os testes dos calculos do investimento "InvestmentCalculator.php"
 ```
 
-
-
-
-## Funcionalidades
-- **Cadastro de Proprietários:** funcionalidade que permite cadastrar um usuário que será, futuramente, proprietário de investimentos;
-
-- **Cadastro de Investimentos:** esta funcionalidade podemos criar um novo investimento para um determinado proprietário já cadastrado;
-
-- **Listagem de Investimentos:** lista todos os investimentos feitos por um usuário e também o saldo atual de cada investimento. Possui paginação;
-
-- **Saque:** esta funcionalidade permite o usuário retirar apenas o valor total de seu investimento, ou seja, o valor que investiu mais o lucro obtido. Lembrando que as taxas de impostos são aplicadas apenas no valor de lucros que aquele investimento gerou;
-
-- **Listagem de Ganhos Retirados:** aqui obtemos uma lista de todos os investimentos que foram sacados pelo proprietário. Esta lista contém informações as informações de valor que aquele investimento gerou e a data do saque, por exemplo;
-
-- **Projeção de Saldos Futuros:** com essa funcionalidades podemos observar melhor e estudar as projeções dos investimentos. É possível ``setar`` um valor em anos para melhor simulação.
-
-## Decisão das Tecnologias
-
-- **Symfony**: decidi utilizar o Symfony pela sua robustez, pela organização por ser MVC e também pela sua modularidade;
-- **MySQL**: pela praticidade e rapidez: por linha de comando tem acesso total ao banco, comandos simples. Portabilidade: qualquer servidor com MySQL terá o cliente     CLI disponível — garante que você consegue administrar em qualquer ambiente;
-- **Abstração do SQL**: em vez de escrever queries manualmente, podemos trabalhar com objetos PHP e deixa o Doctrine gerar as queries. Produtividade: criação            automática de tabelas/mapeamento via migrations. Compatibilidade: caso seja necessário trocar MySQL por PostgreSQL, por exemplo, o Doctrine adapta as queries;
-
 ## Exemplos dos Endpoints
-
+A documentação está disponivél no ambiente local em http://localhost:8000/api/doc
 ### Owner Create
 ```
 {
@@ -164,5 +155,87 @@ src/
 - Doctrine ORM;
 - Insomnia (para testar as rotas);
 - NelmioApiDocBundle (Documentação da API);
+- PHPUnit (testes unitários);
+
+## Decisão das Tecnologias
+
+- **Symfony**: decidi utilizar o Symfony pela sua robustez, pela organização por ser MVC e também pela sua modularidade;
+- **MySQL**: pela praticidade e rapidez: por linha de comando tem acesso total ao banco, comandos simples. Portabilidade: qualquer servidor com MySQL terá o cliente     CLI disponível — garante que você consegue administrar em qualquer ambiente;
+- **Abstração do SQL**: em vez de escrever queries manualmente, podemos trabalhar com objetos PHP e deixa o Doctrine gerar as queries. Produtividade: criação automática de tabelas/mapeamento via migrations. Compatibilidade: caso seja necessário trocar MySQL por PostgreSQL, por exemplo, o Doctrine adapta as queries;
+
+## Quer Testar Localmente Este Projeto?
+
+Este guia descreve os passos necessários para rodar a API em um ambiente LOCAL:
+
+### Pré-requisitos
+
+Antes de começar, verifique se você possui as seguintes ferramentas instaladas no seu sistema:
+
+- [PHP 8+](https://www.php.net/downloads.php)  
+- [Composer](https://getcomposer.org/download/)  
+- [MySQL](https://dev.mysql.com/downloads/)  
+- [Symfony CLI](https://symfony.com/download) (opcional, mas recomendado)  
+- [Insomnia](https://insomnia.rest/download) (para testar as rotas)
+
+
+### Passos para rodar a API localmente
+
+### 1. Clonar o repositório
+```bash
+git clone https://github.com/seu-usuario/api-investimentos.git
+cd api-investimentos
+```
+### 2. Instalar as dependências
+```bash
+	composer install
+```
+
+### 3. Configurar as variáveis de ambiente
+Crie o arquivo .env.local na raiz do projeto e configure a conexão com o banco de dados MySQL:
+```bash
+	DATABASE_URL="mysql://usuario:senha@127.0.0.1:3306/nome_do_banco"
+```
+
+### 4. Criar o BD e rodar as migrations
+
+```bash
+	php bin/console doctrine:database:create
+	php bin/console doctrine:migrations:migrate
+```
+
+### 5. Rodar o servidor local
+Com Symfony CLI:
+```bash
+symfony server:start
+```
+Ou 
+```bash
+symfony serve
+```
+### 6. Testar a API com o Insomnia
+Abra o Insomnia e configure as rotas da API. Exemplo
+```bash
+GET http://127.0.0.1:8000/api/investments
+```
+## Cobertura dos Testes Unitários
+
+A API conta com uma suíte de testes unitários implementada com **PHPUnit**, garantindo a confiabilidade dos cálculos e projeções de investimento.  
+Os testes cobrem os seguintes cenários:
+
+### InvestmentCalculatorTest
+- **Cálculo de investimento válido**  
+  - Verifica se o saldo final do investimento é calculado corretamente com base nos meses decorridos e na taxa de rendimento.
+
+- **Tratamento de exceções**  
+  - Lança exceção caso a data de criação do investimento seja `null`.  
+  - Lança exceção caso a data de criação esteja em formato inválido.
+
+- **Cálculo de meses entre datas**  
+  - Valida o cálculo da diferença em meses entre duas datas distintas.
+
+- **Projeção de saldos futuros**  
+  - Geração da projeção de crescimento do investimento para os próximos anos (padrão: 3 anos além do ano inicial).  
+  - Valida a estrutura do array retornado (`year`, `date`, `expectedBalance`).  
+  - Suporta número customizado de anos, verificando se a projeção é calculada corretamente até o ano especificado.
 
 
