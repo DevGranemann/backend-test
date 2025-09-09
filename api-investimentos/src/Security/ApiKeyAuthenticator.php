@@ -14,6 +14,13 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 
 class ApiKeyAuthenticator extends AbstractAuthenticator
 {
+    private string $apiKey;
+
+    public function __construct(string $apiKey)
+    {
+        $this->apiKey = $apiKey;
+    }
+
     public function supports(Request $request): ?bool
     {
         return $request->headers->has('X-API-KEY');
@@ -21,18 +28,12 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
 
     public function authenticate(Request $request): Passport
     {
-        $apiKey = $request->headers->get('X-API-KEY');
-
-        if ($apiKey !== $_ENV['API_KEY']) {
-            throw new AuthenticationException('Chave da API inválida');
-        }
+        $apiKey = trim($request->headers->get('X-API-KEY'));
 
         return new Passport(
             new UserBadge('api-user'),
             new CustomCredentials(
-                function ($credentials, $user) {
-                    return $credentials === $_ENV['API_KEY'];
-                },
+                fn($credentials, $user) => $credentials === $this->apiKey,
                 $apiKey
             )
         );
@@ -49,5 +50,4 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
             'error' => 'Acesso negado: chave inválida'
         ], 401);
     }
-
 }
