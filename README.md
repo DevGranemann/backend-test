@@ -238,4 +238,20 @@ Os testes cobrem os seguintes cenários:
   - Valida a estrutura do array retornado (`year`, `date`, `expectedBalance`).  
   - Suporta número customizado de anos, verificando se a projeção é calculada corretamente até o ano especificado.
 
+## Autenticação
 
+A API utiliza **API Key Authenticator** para proteger as rotas
+
+- O cliente deve enviar a chave de API em cada requisição, através do header HTTP:
+
+```http
+GET/ api/ 
+X_API_KEY: senha
+```
+
+- Caso a chave seja inválido ou ausente, a API retornará:
+  ```bash
+	{
+		"error": "Chave inválida"
+	}
+  ```
