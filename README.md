@@ -1,88 +1,241 @@
-# Back End Test Project <img src="https://raw.githubusercontent.com/Coderockr/backend-test/refs/heads/main/coderockr.banner.svg" align="right" height="50px" />
+# API de Investimentos
+API desenvolvida para agerenciar investimentos.
 
-You should see this challenge as an opportunity to create an application following modern development best practices (given the stack of your choice), but also feel free to use your own architecture preferences (coding standards, code organization, third-party libraries, etc). It’s perfectly fine to use vanilla code or any framework or libraries.
+## Funcionalidades
+- **Cadastro de Proprietários:** funcionalidade que permite cadastrar um usuário que será, futuramente, proprietário de investimentos;
 
-## Scope
+- **Cadastro de Investimentos:** esta funcionalidade podemos criar um novo investimento para um determinado proprietário já cadastrado;
 
-In this challenge you should build an **API** for an application that stores and manages investments, it should have the following features:
+- **Listagem de Investimentos:** lista todos os investimentos feitos por um usuário e também o saldo atual de cada investimento. Possui paginação;
 
-1. __Creation__ of an investment with an owner, a creation date and an amount.
-    1. The creation date of an investment can be today or a date in the past.
-    2. An investment should not be or become negative.
-2. __View__ of an investment with its initial amount and expected balance.
-    1. Expected balance should be the sum of the invested amount and the [gains][].
-    2. If an investment was already withdrawn then the balance must reflect the gains of that investment
-3. __Withdrawal__ of a investment.
-    1. The withdraw will always be the sum of the initial amount and its gains,
-       partial withdrawn is not supported.
-    2. The withdrawal date must be informmed by the user, and it can be a date in the past or today, but can't happen before the investment creation or the future.
-    3. [Taxes][taxes] need to be applied to the withdrawals before showing the final value.
-4. __List__ of a person's investments
-    1. This list should have pagination.
+- **Saque:** esta funcionalidade permite o usuário retirar apenas o valor total de seu investimento, ou seja, o valor que investiu mais o lucro obtido. Lembrando que as taxas de impostos são aplicadas apenas no valor de lucros que aquele investimento gerou;
 
-__NOTE:__ the implementation of an interface will not be evaluated, and if implemented the endpoints still need to be usable/readable for a machine.
+- **Listagem de Ganhos Retirados:** aqui obtemos uma lista de todos os investimentos que foram sacados pelo proprietário. Esta lista contém informações as informações de valor que aquele investimento gerou e a data do saque, por exemplo;
 
-### Gain Calculation
+- **Projeção de Saldos Futuros:** com essa funcionalidades podemos observar melhor e estudar as projeções dos investimentos. É possível ``setar`` um valor em anos para melhor simulação.
 
-The investment will pay 0.52% every month in the same day of the investment creation.
+## Estrutura do Repositório
 
-Given that the gain is paid every month, it should be treated as [compound gain][], which means that every new period (month) the amount gained will become part of the investment balance for the next payment.
+```
+src/
+│
+├── Migrations/
+│    ├── VersionXXXXX.php -> Migrações que foram criadas e executadas
+├── Controller/
+│   ├── InvestmentController.php -> Controlador do Investment 
+│   └── OwnerController.php      -> Controlador do Owner
+├── Entity/
+│   └── Investment.php           -> Objeto que representa Investment no BD
+│   └── Owner.php                -> Objeto que representa Owner no BD     
+├── Utils/
+│   └──  InvestmentCalculator.php -> Possui os calculos do investimento  
+│   └──  TakeInvestmentOut.php    -> Possui a lógica para saque dos investimentos
+├── Tests/
+│   ├── Utils/
+│       └── InvestmentCalculatorTest.php -> Documento onde está os testes dos calculos do investimento "InvestmentCalculator.php"
+```
 
-### Taxation
+## Exemplos dos Endpoints
+A documentação está disponivél no ambiente local em http://localhost:8000/api/doc
+### Owner Create
+```
+{
+	"message": "Proprietário criado com sucesso.",
+	"owner": {
+		"id": 4,
+		"name": "Maria da Silva"
+	}
+}
+```
+### Investment Create
+```
+{
+	"message": "Investimento criado com sucesso.",
+	"Investment": {
+		"id": 26,
+		"ownerId": 2,
+		"ownerName": "João da Silva",
+		"creationDate": "2025-07-03 00:00:00",
+		"investmentValue": 16000
+	}
+}
+```
+### Invesment List 
+```
+{
+	"page": 1,
+	"limit": 5,
+	"total": 25,
+	"pages": 5,
+	"investments": [
+		{
+			"id": 1,
+			"ownerId": 1,
+			"ownerName": "Eduardo da Silva",
+			"creationDate": "2025-08-03 00:00:00",
+			"investmentValue": 0,
+			"valueWithWinnings": 0,
+			"winningsValueOnly": 0
+		},
+		{
+			"id": 2,
+			"ownerId": 1,
+			"ownerName": "Eduardo da Silva",
+			"creationDate": "2025-07-03 00:00:00",
+			"investmentValue": 0,
+			"valueWithWinnings": 0,
+			"winningsValueOnly": 0
+		},
+```
+### Investment Draw
+```
+{
+	"message": "Saque realizado com sucesso",
+	"withdrawValue": 127018.2,
+	"investmentId": 28,
+	"ownerId": 1,
+	"ownerName": "Eduardo da Silva"
+}
+```
+### Withdraw Gains
+```
+{
+	"withdrawnGains": [
+		{
+			"investmentId": 1,
+			"withdrawnAt": "2025-09-06 14:33:50",
+			"profit": null,
+			"ownerId": 1,
+			"ownerName": "Eduardo da Silva"
+		},
+		{
+			"investmentId": 2,
+			"withdrawnAt": "2025-09-06 18:44:41",
+			"profit": 20.85,
+			"ownerId": 1,
+			"ownerName": "Eduardo da Silva"
+		},
+		{
+			"investmentId": 3,
+			"withdrawnAt": "2025-09-06 19:15:12",
+			"profit": 41.71,
+			"ownerId": 1,
+			"ownerName": "Eduardo da Silva"
+		},
+```
+### Future Balances
+```
+{
+	"investmentId": 5,
+	"ownerId": 1,
+	"ownerName": "Eduardo da Silva",
+	"years": 5,
+	"projections": [
+		{
+			"year": 0,
+			"date": "2025-07-03",
+			"expectedBalance": 6000
+		},
+		{
+			"year": 1,
+			"date": "2026-07-03",
+			"expectedBalance": 6385.3
+		},
+		{
+			"year": 2,
+			"date": "2027-07-03",
+			"expectedBalance": 6795.33
+		},
+```
 
-When money is withdrawn, tax is triggered. Taxes apply only to the gain portion of the money withdrawn. For example, if the initial investment was 1000.00, the current balance is 1200.00, then the taxes will be applied to the 200.00.
+## Ferramentas e Tecnologias Utilizadas:
+- PHP 8.4.12;
+- Symfony 5.12.0;
+- BD MySQL (por linha de comando);
+- Doctrine ORM;
+- Insomnia (para testar as rotas);
+- NelmioApiDocBundle (Documentação da API);
+- PHPUnit (testes unitários);
 
-The tax percentage changes according to the age of the investment:
-* If it is less than one year old, the percentage will be 22.5% (tax = 45.00).
-* If it is between one and two years old, the percentage will be 18.5% (tax = 37.00).
-* If older than two years, the percentage will be 15% (tax = 30.00).
+## Decisão das Tecnologias
 
-## Requirements
-1. Create project using any technology of your preference. It’s perfectly OK to use vanilla code or any framework or libraries;
-2. Although you can use as many dependencies as you want, you should manage them wisely;
-3. It is not necessary to send the notification emails, however, the code required for that would be welcome;
-4. The API must be documented in some way.
+- **Symfony**: decidi utilizar o Symfony pela sua robustez, pela organização por ser MVC e também pela sua modularidade;
+- **MySQL**: pela praticidade e rapidez: por linha de comando tem acesso total ao banco, comandos simples. Portabilidade: qualquer servidor com MySQL terá o cliente     CLI disponível — garante que você consegue administrar em qualquer ambiente;
+- **Abstração do SQL**: em vez de escrever queries manualmente, podemos trabalhar com objetos PHP e deixa o Doctrine gerar as queries. Produtividade: criação automática de tabelas/mapeamento via migrations. Compatibilidade: caso seja necessário trocar MySQL por PostgreSQL, por exemplo, o Doctrine adapta as queries;
 
-## Deliverables
-The project source code and dependencies should be made available in GitHub. Here are the steps you should follow:
-1. Fork this repository to your GitHub account (create an account if you don't have one, you will need it working with us).
-2. Create a "development" branch and commit the code to it. Do not push the code to the main branch.
-3. Include a README file that describes:
-    - Special build instructions, if any
-    - List of third-party libraries used and short description of why/how they were used
-    - A link to the API documentation.
-4. Once the work is complete, create a pull request from "development" into "main" and send us the link.
-5. Avoid using huge commits hiding your progress. Feel free to work on a branch and use `git rebase` to adjust your commits before submitting the final version.
+## Quer Testar Localmente Este Projeto?
 
-## Coding Standards
-When working on the project be as clean and consistent as possible.
+Este guia descreve os passos necessários para rodar a API em um ambiente LOCAL:
 
-## Project Deadline
-Ideally you'd finish the test project in 5 days. It shouldn't take you longer than a entire week.
+### Pré-requisitos
 
-## Quality Assurance
-Use the following checklist to ensure high quality of the project.
+Antes de começar, verifique se você possui as seguintes ferramentas instaladas no seu sistema:
 
-### General
-- First of all, the application should run without errors.
-- Are all requirements set above met?
-- Is coding style consistent?
-- The API is well documented?
-- The API has unit tests?
+- [PHP 8+](https://www.php.net/downloads.php)  
+- [Composer](https://getcomposer.org/download/)  
+- [MySQL](https://dev.mysql.com/downloads/)  
+- [Symfony CLI](https://symfony.com/download) (opcional, mas recomendado)  
+- [Insomnia](https://insomnia.rest/download) (para testar as rotas)
 
-## Submission
-1. A link to the Github repository.
-2. Briefly describe how you decided on the tools that you used.
 
-## Have Fun Coding 🤘
-- This challenge description is intentionally vague in some aspects, but if you need assistance feel free to ask for help.
-- If any of the seems out of your current level, you may skip it, but remember to tell us about it in the pull request.
+### Passos para rodar a API localmente
 
-## Credits
+### 1. Clonar o repositório
+```bash
+git clone https://github.com/seu-usuario/api-investimentos.git
+cd api-investimentos
+```
+### 2. Instalar as dependências
+```bash
+	composer install
+```
 
-This coding challenge was inspired on [kinvoapp/kinvo-back-end-test](https://github.com/kinvoapp/kinvo-back-end-test/blob/2f17d713de739e309d17a1a74a82c3fd0e66d128/README.md)
+### 3. Configurar as variáveis de ambiente
+Crie o arquivo .env.local na raiz do projeto e configure a conexão com o banco de dados MySQL:
+```bash
+	DATABASE_URL="mysql://usuario:senha@127.0.0.1:3306/nome_do_banco"
+```
 
-[gains]: #gain-calculation
-[taxes]: #taxation
-[interest]: #interest-calculation
-[compound gain]: https://www.investopedia.com/terms/g/gain.asp
+### 4. Criar o BD e rodar as migrations
+
+```bash
+	php bin/console doctrine:database:create
+	php bin/console doctrine:migrations:migrate
+```
+
+### 5. Rodar o servidor local
+Com Symfony CLI:
+```bash
+symfony server:start
+```
+Ou 
+```bash
+symfony serve
+```
+### 6. Testar a API com o Insomnia
+Abra o Insomnia e configure as rotas da API. Exemplo
+```bash
+GET http://127.0.0.1:8000/api/investments
+```
+## Cobertura dos Testes Unitários
+
+A API conta com uma suíte de testes unitários implementada com **PHPUnit**, garantindo a confiabilidade dos cálculos e projeções de investimento.  
+Os testes cobrem os seguintes cenários:
+
+### InvestmentCalculatorTest
+- **Cálculo de investimento válido**  
+  - Verifica se o saldo final do investimento é calculado corretamente com base nos meses decorridos e na taxa de rendimento.
+
+- **Tratamento de exceções**  
+  - Lança exceção caso a data de criação do investimento seja `null`.  
+  - Lança exceção caso a data de criação esteja em formato inválido.
+
+- **Cálculo de meses entre datas**  
+  - Valida o cálculo da diferença em meses entre duas datas distintas.
+
+- **Projeção de saldos futuros**  
+  - Geração da projeção de crescimento do investimento para os próximos anos (padrão: 3 anos além do ano inicial).  
+  - Valida a estrutura do array retornado (`year`, `date`, `expectedBalance`).  
+  - Suporta número customizado de anos, verificando se a projeção é calculada corretamente até o ano especificado.
+
+
