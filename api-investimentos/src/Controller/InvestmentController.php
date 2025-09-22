@@ -6,15 +6,16 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Investment;
 use App\Entity\Owner;
 use App\Repository\InvestmentRepository;
-use App\Utils\InvestmentCalculator;
+use App\Service\InvestmentCalculator;
 use App\Utils\TakeInvestmentOut;
+use App\Utils\InvestmentCalculatorUtils;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
 use OpenApi\Attributes as OA;
 
-class InvestimentoController extends AbstractController
+class InvestmentController extends AbstractController
 {
     // =========================
     // POST /api/investments/create
@@ -91,7 +92,7 @@ class InvestimentoController extends AbstractController
     #[OA\Parameter(name: 'limit', in: 'query', required: false, description: 'Itens por página', schema: new OA\Schema(type: 'integer', default: 10))]
     #[OA\Response(response: 200, description: 'Lista de investimentos retornada com sucesso')]
     #[OA\Response(response: 404, description: 'Proprietário não encontrado ou sem investimentos')]
-    public function investmentList(Request $request, int $ownerId, EntityManagerInterface $em, InvestmentRepository $investmentRepository): JsonResponse
+    public function investmentList(Request $request, int $ownerId, EntityManagerInterface $em, InvestmentRepository $investmentRepository, InvestmentCalculator $calculator): JsonResponse
     {
         $owner = $em->getRepository(Owner::class)->find($ownerId);
         if (!$owner) {
@@ -108,16 +109,20 @@ class InvestimentoController extends AbstractController
         $paginated = $investmentRepository->findPaginatedByOwner($owner, $page, $limit);
         $investments = $paginated['items'];
         $result = [];
+        $currentDate = new \DateTime();
 
         foreach ($investments as $investment) {
             $result[] = [
                 'id' => $investment->getId(),
                 'ownerId' => $owner->getId(),
                 'ownerName' => $owner->getName(),
-                'creationDate' => $investment->getCreationDate()->format('Y-m-d H:i:s'),
+                'creationDate' => $investment->getCreationDate(),
                 'investmentValue' => $investment->getInvestmentValue(),
-                'valueWithWinnings' => InvestmentCalculator::calculateInvestment($investment),
-                'winningsValueOnly' => InvestmentCalculator::calculateValueWinnings($investment),
+                'valueWithWinnings' => $calculator->calculateInvestment(
+                    $investment,
+                    $currentDate,
+                ),
+                'winningsValueOnly' => InvestmentCalculatorUtils::calculateValueWinnings($investment),
             ];
         }
 
@@ -225,6 +230,7 @@ class InvestimentoController extends AbstractController
     #[OA\Parameter(name: 'years', in: 'query', required: false, description: 'Número de anos para projeção', schema: new OA\Schema(type: 'integer', default: 3))]
     #[OA\Response(response: 200, description: 'Projeção retornada com sucesso')]
     #[OA\Response(response: 404, description: 'Investimento não encontrado')]
+
     public function projectFutureBalances(int $investmentId, Request $request, EntityManagerInterface $em): JsonResponse
     {
         $investment = $em->getRepository(Investment::class)->find($investmentId);
@@ -233,14 +239,14 @@ class InvestimentoController extends AbstractController
         }
 
         $years = max(1, (int)$request->query->get('years', 3));
-        $projection = InvestmentCalculator::projectFutureBalances($investment, $years);
+        //$projection = InvestmentCalculator::projectFutureBalances($investment, $years);
 
         return $this->json([
             'investmentId' => $investment->getId(),
             'ownerId' => $investment->getOwner()->getId(),
             'ownerName' => $investment->getOwner()->getName(),
             'years' => $years,
-            'projections' => $projection
+            //'projections' => $projection
         ]);
     }
 }

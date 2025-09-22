@@ -1,4 +1,10 @@
 services:
+    App\Service\InvestmentCalculator:
+        autowire: true
+        autoconfigure: true
+    App\Service\DateCalculator:
+        autowire: true
+        autoconfigure: true
     # Serviço específico para o Authenticator
     App\Security\ApiKeyAuthenticator:
         arguments:

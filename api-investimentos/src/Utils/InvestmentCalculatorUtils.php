@@ -4,7 +4,7 @@ namespace App\Utils;
 
 use App\Entity\Investment;
 
-class InvestmentCalculator
+class InvestmentCalculatorUtils
 {
     public static function calculateInvestment(Investment $investment): float
     {
@@ -23,7 +23,7 @@ class InvestmentCalculator
             }
         }
 
-        $currentDate = new \DateTime();
+        $currentDate = new \DateTime(); // passar no controller
         $months = self::calculateMonthsBetween($creationDate, $currentDate);
 
         $finalValue = $initValue * pow(1.0052, $months);
@@ -40,7 +40,7 @@ class InvestmentCalculator
     public static function calculateValueWinnings(Investment $investment): float {
 
         $initValue = $investment->getInvestmentValue();
-        $finalValue = InvestmentCalculator::calculateInvestment($investment);
+        $finalValue = InvestmentCalculatorUtils::calculateInvestment($investment);
 
         $valueWinnings = $finalValue - ($initValue);
 
